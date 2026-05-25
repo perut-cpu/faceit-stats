@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FACEIT Stats — CS2 Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0c0d10;
+  --surface: #13151a;
+  --surface2: #1a1d24;
+  --surface3: #22252e;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --orange: #ff6c00;
+  --orange2: #ff8c30;
+  --orange-glow: rgba(255,108,0,0.15);
+  --green: #00e87a;
+  --green-dim: rgba(0,232,122,0.12);
+  --red: #ff3d3d;
+  --red-dim: rgba(255,61,61,0.12);
+  --text: #f0f0f0;
+  --muted: #6b7280;
+  --muted2: #9ca3af;
+  --font: 'Barlow', sans-serif;
+  --cond: 'Barlow Condensed', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SEARCH SCREEN ── */
+#search-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+#search-screen::before {
+  content: '';
+  position: fixed;
+  top: -200px; left: 50%;
+  transform: translateX(-50%);
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(255,108,0,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.logo-area {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.logo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--orange);
+  color: #fff;
+  font-family: var(--cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+.logo-title {
+  font-family: var(--cond);
+  font-size: clamp(52px, 8vw, 80px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -1px;
+  color: #fff;
+}
+.logo-title span { color: var(--orange); }
+.logo-sub {
+  font-size: 16px;
+  color: var(--muted2);
+  margin-top: 12px;
+  font-weight: 400;
+}
+.search-box {
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+}
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.search-input-wrap:focus-within {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px var(--orange-glow);
+}
+.search-icon {
+  padding: 0 16px;
+  color: var(--muted);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+#nickname-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+  padding: 18px 0;
+  font-weight: 500;
+}
+#nickname-input::placeholder { color: var(--muted); font-weight: 400; }
+#search-btn {
+  background: var(--orange);
+  border: none;
+  color: #fff;
+  font-family: var(--cond);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 18px 28px;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  flex-shrink: 0;
+}
+#search-btn:hover { background: var(--orange2); }
+#search-btn:active { transform: scale(0.98); }
+.search-hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 12px;
+  text-align: center;
+}
+.search-hint a { color: var(--orange); text-decoration: none; }
+.example-players {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+.ex-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.ex-pill:hover { border-color: var(--orange); color: var(--orange); }
+.features-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 56px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.feat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted2);
+}
+.feat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+
+/* ── ERROR / LOADING ── */
+#loading-screen, #error-screen {
+  display: none;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.spinner {
+  width: 44px; height: 44px;
+  border: 3px solid var(--surface3);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 15px; color: var(--muted2); }
+.err-icon { font-size: 48px; }
+.err-msg { font-size: 17px; color: var(--text); font-weight: 500; }
+.err-sub { font-size: 14px; color: var(--muted); }
+.back-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background .15s;
+}
+.back-btn:hover { background: var(--surface3); }
+
+/* ── STATS APP ── */
+#stats-screen { display: none; }
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 60px;
+}
+.header-logo {
+  font-family: var(--cond);
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--orange);
+  letter-spacing: -0.5px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.header-search {
+  flex: 1;
+  max-width: 340px;
+  display: flex;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.header-search:focus-within { border-color: var(--orange); }
+.header-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 8px 12px;
+}
+.header-search button {
+  background: var(--orange);
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.faceit-link {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted2);
+  font-size: 13px;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 6px;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.faceit-link:hover { border-color: var(--orange); color: var(--orange); }
+
+/* PLAYER HERO */
+.player-hero {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.player-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.player-avatar-wrap { position: relative; flex-shrink: 0; }
+.player-avatar {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  border: 3px solid var(--orange);
+  object-fit: cover;
+  display: block;
+  background: var(--surface2);
+}
+.avatar-fallback {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  border: 3px solid var(--orange);
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--cond); font-size: 30px; font-weight: 900; color: var(--orange);
+}
+.lvl-badge {
+  position: absolute;
+  bottom: -4px; right: -4px;
+  background: var(--orange);
+  color: #fff;
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 900;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--bg);
+}
+.player-info { flex: 1; min-width: 200px; }
+.player-name {
+  font-family: var(--cond);
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.player-meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.meta-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--muted2);
+}
+.country-flag { font-size: 16px; }
+.player-elo-block {
+  text-align: right;
+  flex-shrink: 0;
+}
+.elo-number {
+  font-family: var(--cond);
+  font-size: 52px;
+  font-weight: 900;
+  color: var(--orange);
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.elo-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.elo-progress { margin-top: 8px; }
+.elo-bar-wrap { height: 4px; background: var(--surface3); border-radius: 2px; width: 180px; margin-top: 4px; }
+.elo-bar-fill { height: 100%; background: var(--orange); border-radius: 2px; transition: width .6s ease; }
+.elo-range { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* FORM STRIP */
+.form-strip {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.form-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.form-dots { display: flex; gap: 5px; }
+.fdot {
+  width: 30px; height: 30px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; font-family: var(--cond);
+}
+.fdot.w { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,232,122,0.2); }
+.fdot.l { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,61,61,0.2); }
+.streak-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--orange-glow);
+  border: 1px solid rgba(255,108,0,0.3);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--orange);
+  font-family: var(--cond);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* TABS */
+.tabs-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 60px;
+  z-index: 90;
+}
+.tabs-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs-inner::-webkit-scrollbar { display: none; }
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tab-btn:hover { color: var(--muted2); }
+.tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+/* CONTENT */
+.content-area {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* STAT GRID */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s, transform .2s;
+}
+.stat-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.stat-card.highlight { border-color: rgba(255,108,0,0.3); }
+.stat-card.highlight::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--orange);
+}
+.sc-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 8px; }
+.sc-val { font-family: var(--cond); font-size: 30px; font-weight: 900; line-height: 1; }
+.sc-val.orange { color: var(--orange); }
+.sc-val.green { color: var(--green); }
+.sc-delta { font-size: 12px; margin-top: 5px; font-weight: 500; }
+.delta-up { color: var(--green); }
+.delta-dn { color: var(--red); }
+.delta-neu { color: var(--muted); }
+
+/* SECTION HEADERS */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  margin-top: 28px;
+}
+.section-head h3 {
+  font-family: var(--cond);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+.section-head-line { flex: 1; height: 1px; background: var(--border); }
+
+/* BEST MATCH */
+.best-match-card {
+  background: var(--surface);
+  border: 1px solid rgba(255,108,0,0.35);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.best-match-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--orange), var(--orange2));
+}
+.bm-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.bm-crown { font-size: 28px; }
+.bm-info { flex: 1; }
+.bm-map { font-family: var(--cond); font-size: 22px; font-weight: 900; color: var(--text); }
+.bm-score { font-size: 14px; color: var(--muted2); margin-top: 2px; }
+.bm-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.bm-tag {
+  background: var(--orange-glow);
+  border: 1px solid rgba(255,108,0,0.4);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: var(--cond);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--orange);
+  text-transform: uppercase;
+}
+.bm-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.bm-stat { background: var(--surface2); border-radius: 8px; padding: 10px; text-align: center; }
+.bm-val { font-family: var(--cond); font-size: 22px; font-weight: 900; }
+.bm-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* MATCH LIST */
+.match-list { display: flex; flex-direction: column; gap: 6px; }
+.match-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: border-color .15s, background .15s;
+  cursor: pointer;
+  text-decoration: none;
+}
+.match-item:hover { border-color: var(--border2); background: var(--surface2); }
+.match-result-badge {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--cond); font-size: 14px; font-weight: 900;
+  flex-shrink: 0;
+}
+.win-badge { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,232,122,0.25); }
+.loss-badge { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,61,61,0.25); }
+.match-map-name { font-weight: 600; font-size: 14px; min-width: 110px; }
+.match-score-txt { font-size: 13px; color: var(--muted2); min-width: 60px; }
+.match-stats-row { display: flex; gap: 18px; margin-left: auto; flex-wrap: wrap; }
+.ms-item { text-align: center; }
+.ms-val { font-family: var(--cond); font-size: 16px; font-weight: 700; }
+.ms-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.match-date { font-size: 12px; color: var(--muted); min-width: 80px; text-align: right; flex-shrink: 0; }
+.kd-good { color: var(--green); }
+.kd-ok { color: var(--orange2); }
+.kd-bad { color: var(--red); }
+
+/* MAP STATS */
+.maps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.map-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  transition: border-color .2s, transform .2s;
+}
+.map-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.map-name-header { font-family: var(--cond); font-size: 17px; font-weight: 800; margin-bottom: 12px; }
+.map-wr-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.map-wr-val { font-family: var(--cond); font-size: 22px; font-weight: 900; }
+.wr-positive { color: var(--green); }
+.wr-neutral { color: var(--orange); }
+.wr-negative { color: var(--red); }
+.map-bar { height: 4px; background: var(--surface3); border-radius: 2px; margin-bottom: 12px; }
+.map-bar-fill { height: 100%; border-radius: 2px; transition: width .6s ease; }
+.map-row { display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; }
+.map-row-label { color: var(--muted); }
+.map-row-val { color: var(--muted2); font-weight: 500; }
+
+/* CHARTS */
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.chart-title {
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted2);
+  margin-bottom: 16px;
+}
+.chart-wrap { position: relative; }
+
+/* COMPARE */
+.compare-grid { display: flex; flex-direction: column; gap: 10px; }
+.compare-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  transition: border-color .2s;
+}
+.compare-card.is-you { border-color: rgba(255,108,0,0.4); }
+.cc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.cc-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--cond); font-size: 14px; font-weight: 900; flex-shrink: 0; }
+.cc-name { font-size: 14px; font-weight: 600; }
+.cc-level { font-size: 12px; color: var(--muted); }
+.you-pill { background: var(--orange-glow); border: 1px solid rgba(255,108,0,0.3); color: var(--orange); font-size: 11px; font-weight: 700; font-family: var(--cond); letter-spacing: 0.5px; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+.cc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.cc-stat { text-align: center; }
+.cc-val { font-family: var(--cond); font-size: 18px; font-weight: 700; }
+.cc-lbl { font-size: 11px; color: var(--muted); }
+.add-friend-row { display: flex; gap: 8px; margin-top: 16px; }
+.add-friend-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+.add-friend-input:focus { border-color: var(--orange); }
+.add-friend-btn {
+  background: var(--orange);
+  border: none;
+  color: #fff;
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.add-friend-btn:hover { background: var(--orange2); }
+
+/* AI INSIGHT */
+.insight-card {
+  background: linear-gradient(135deg, var(--surface2) 0%, rgba(255,108,0,0.05) 100%);
+  border: 1px solid rgba(255,108,0,0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.insight-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.insight-icon { font-size: 20px; }
+.insight-title { font-family: var(--cond); font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--orange); }
+.insight-text { font-size: 14px; color: var(--muted2); line-height: 1.6; }
+.insight-text strong { color: var(--text); }
+
+/* LOADING STATE inside stats */
+.skeleton { background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%); background-size: 200%; animation: shimmer 1.2s infinite; border-radius: 6px; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .player-hero-inner { padding: 20px 16px; }
+  .player-elo-block { text-align: left; width: 100%; }
+  .elo-bar-wrap { width: 100%; }
+  .bm-stats { grid-template-columns: repeat(3, 1fr); }
+  .match-stats-row { gap: 10px; }
+  .match-date { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- SEARCH SCREEN -->
+<div id="search-screen">
+  <div class="logo-area">
+    <div><span class="logo-badge">CS2 · FACEIT</span></div>
+    <div class="logo-title">FACEIT<span>STATS</span></div>
+    <div class="logo-sub">Детальная статистика любого игрока</div>
+  </div>
+
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="nickname-input" type="text" placeholder="Введи FACEIT никнейм..." autocomplete="off" spellcheck="false">
+      <button id="search-btn" onclick="searchPlayer()">Найти</button>
+    </div>
+    <div class="search-hint">Или вставь ссылку на профиль: <a>faceit.com/en/players/NICKNAME</a></div>
+    <div class="example-players">
+      <div class="ex-pill" onclick="fillAndSearch('NiKo')">NiKo</div>
+      <div class="ex-pill" onclick="fillAndSearch('s1mple')">s1mple</div>
+      <div class="ex-pill" onclick="fillAndSearch('donk')">donk</div>
+      <div class="ex-pill" onclick="fillAndSearch('sh1ro')">sh1ro</div>
+      <div class="ex-pill" onclick="fillAndSearch('b1t')">b1t</div>
+    </div>
+  </div>
+
+  <div class="features-row">
+    <div class="feat-item"><div class="feat-dot"></div>ELO · Уровень</div>
+    <div class="feat-item"><div class="feat-dot"></div>История матчей</div>
+    <div class="feat-item"><div class="feat-dot"></div>Статистика по картам</div>
+    <div class="feat-item"><div class="feat-dot"></div>Граф прогресса ELO</div>
+    <div class="feat-item"><div class="feat-dot"></div>Сравнение с игроками</div>
+    <div class="feat-item"><div class="feat-dot"></div>K/D · HS% · ADR</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-msg">Загружаем данные FACEIT...</div>
+</div>
+
+<!-- ERROR -->
+<div id="error-screen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:12px;text-align:center;padding:20px;">
+  <div class="err-icon">😵</div>
+  <div class="err-msg" id="err-msg-text">Игрок не найден</div>
+  <div class="err-sub" id="err-msg-sub">Проверь правильность никнейма</div>
+  <button class="back-btn" onclick="goBack()">← Попробовать снова</button>
+</div>
+
+<!-- STATS SCREEN -->
+<div id="stats-screen">
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="header-logo" onclick="goBack()">FACEITSTATS</div>
+      <div class="header-search">
+        <input id="header-input" type="text" placeholder="Поиск игрока..." autocomplete="off">
+        <button onclick="searchFromHeader()">→</button>
+      </div>
+      <a id="faceit-profile-link" href="#" target="_blank" class="faceit-link">
+        Открыть FACEIT ↗
+      </a>
+    </div>
+  </header>
+
+  <div class="player-hero">
+    <div class="player-hero-inner">
+      <div class="player-avatar-wrap">
+        <img id="p-avatar" class="player-avatar" src="" alt="" onerror="this.style.display='none';document.getElementById('p-avatar-fb').style.display='flex'">
+        <div id="p-avatar-fb" class="avatar-fallback" style="display:none"></div>
+        <div class="lvl-badge" id="p-level">?</div>
+      </div>
+      <div class="player-info">
+        <div class="player-name" id="p-name">—</div>
+        <div class="player-meta">
+          <div class="meta-chip"><span id="p-flag" class="country-flag"></span><span id="p-country"></span></div>
+          <div class="meta-chip">📊 <span id="p-matches">— матчей</span></div>
+          <div class="meta-chip">🏆 <span id="p-winrate">— WR</span></div>
+        </div>
+      </div>
+      <div class="player-elo-block">
+        <div class="elo-number" id="p-elo">—</div>
+        <div class="elo-label">ELO · CS2</div>
+        <div class="elo-progress">
+          <div class="elo-bar-wrap"><div class="elo-bar-fill" id="elo-bar-fill" style="width:0%"></div></div>
+          <div class="elo-range"><span id="elo-range-min"></span><span id="elo-range-max"></span></div>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border)">
+      <div class="form-strip">
+        <div class="form-label">Форма (10 матчей)</div>
+        <div class="form-dots" id="form-dots"></div>
+        <div class="streak-badge" id="streak-badge" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <div class="tabs-inner">
+      <button class="tab-btn active" onclick="switchTab('overview',this)">Обзор</button>
+      <button class="tab-btn" onclick="switchTab('matches',this)">Матчи</button>
+      <button class="tab-btn" onclick="switchTab('maps',this)">Карты</button>
+      <button class="tab-btn" onclick="switchTab('progress',this)">Прогресс</button>
+      <button class="tab-btn" onclick="switchTab('compare',this)">Сравнение</button>
+    </div>
+  </div>
+
+  <div class="content-area">
+
+    <!-- OVERVIEW -->
+    <div id="tab-overview" class="tab-pane active">
+      <div class="stat-grid" id="overview-stats"></div>
+
+      <div id="best-match-section"></div>
+
+      <div class="section-head">
+        <h3>Последние матчи</h3>
+        <div class="section-head-line"></div>
+        <span style="font-size:13px;color:var(--muted);cursor:pointer" onclick="switchTabByName('matches')">Все →</span>
+      </div>
+      <div class="match-list" id="recent-match-list"></div>
+    </div>
+
+    <!-- MATCHES -->
+    <div id="tab-matches" class="tab-pane">
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)" id="match-summary-stats"></div>
+      <div class="section-head"><h3>История матчей</h3><div class="section-head-line"></div></div>
+      <div class="match-list" id="full-match-list"></div>
+    </div>
+
+    <!-- MAPS -->
+    <div id="tab-maps" class="tab-pane">
+      <div class="section-head"><h3>По картам</h3><div class="section-head-line"></div></div>
+      <div class="maps-grid" id="maps-grid"></div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="tab-progress" class="tab-pane">
+      <div class="chart-card">
+        <div class="chart-title">ELO за последние 20 матчей</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="elo-chart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">K/D по последним 20 матчам</div>
+        <div class="chart-wrap" style="height:180px"><canvas id="kd-chart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Winrate по дням недели</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="day-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- COMPARE -->
+    <div id="tab-compare" class="tab-pane">
+      <div class="section-head"><h3>Сравнение игроков</h3><div class="section-head-line"></div></div>
+      <div class="compare-grid" id="compare-grid"></div>
+      <div class="add-friend-row">
+        <input class="add-friend-input" id="friend-input" type="text" placeholder="Добавить игрока по нику..." autocomplete="off">
+        <button class="add-friend-btn" onclick="addCompareFriend()">Добавить</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// FACEIT proxy (работает через Vercel)
+let playerData = null;
+let chartsBuilt = false;
+let compareList = [];
+
+// ── UTILS ──
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if(cls) e.className = cls; if(text!==undefined) e.textContent = text; return e; };
+
+function show(id) {
+  ['search-screen','loading-screen','error-screen','stats-screen'].forEach(s => {
+    const el = $(s); if(!el) return;
+    el.style.display = s === id ? (s === 'search-screen' ? 'flex' : s === 'stats-screen' ? 'block' : 'flex') : 'none';
+  });
+}
+
+function goBack() {
+  show('search-screen');
+  chartsBuilt = false;
+}
+
+function fillAndSearch(nick) {
+  $('nickname-input').value = nick;
+  searchPlayer();
+}
+
+function searchFromHeader() {
+  const v = $('header-input').value.trim();
+  if(v) { $('nickname-input').value = v; searchPlayer(); }
+}
+
+// Parse faceit URL
+$('nickname-input').addEventListener('input', function() {
+  const v = this.value;
+  const m = v.match(/faceit\.com\/[a-z]+\/players\/([^\/\?]+)/i);
+  if(m) this.value = m[1];
+});
+$('nickname-input').addEventListener('keydown', e => { if(e.key==='Enter') searchPlayer(); });
+$('header-input').addEventListener('keydown', e => { if(e.key==='Enter') searchFromHeader(); });
+
+// ── MAIN SEARCH ──
+async function searchPlayer() {
+  const nick = $('nickname-input').value.trim();
+  if(!nick) return;
+  show('loading-screen');
+  chartsBuilt = false;
+
+  try {
+    $('loading-msg').textContent = 'Запрашиваем FACEIT API...';
+    const data = await fetchFaceitStats(nick);
+    playerData = data;
+    compareList = [data];
+    renderStats(data);
+    show('stats-screen');
+  } catch(e) {
+    $('err-msg-text').textContent = e.message || 'Ошибка загрузки';
+    $('err-msg-sub').textContent = 'Проверь никнейм или попробуй позже';
+    show('error-screen');
+  }
+}
+
+// ── FACEIT API (через прокси) ──
+async function fetchFaceitStats(nickname) {
+  async function api(path) {
+    const r = await fetch('/faceit' + path);
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.message || 'FACEIT: ' + r.status);
+    }
+    return r.json();
+  }
+
+  const MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  const fmtDate = ts => { const d = new Date(ts*1000); return d.getDate()+' '+MONTHS[d.getMonth()]; };
+  const ELO_RANGES = [[1,100],[101,300],[301,500],[501,750],[751,900],[901,1050],[1051,1200],[1201,1550],[1551,2000],[2001,99999]];
+
+  $('loading-msg').textContent = 'Получаем профиль...';
+  const player = await api(`/players?nickname=${encodeURIComponent(nickname)}&game=cs2`);
+  const pid = player.player_id;
+
+  $('loading-msg').textContent = 'Загружаем статистику...';
+  const [stats, history] = await Promise.all([
+    api(`/players/${pid}/stats/cs2`),
+    api(`/players/${pid}/history?game=cs2&limit=20`)
+  ]);
+
+  const ls = stats.lifetime || {};
+  const total = parseInt(ls['Matches']||0);
+  const wins = parseInt(ls['Wins']||0);
+  const cs2 = player.games?.cs2 || {};
+  const elo = cs2.faceit_elo || 1000;
+  const level = cs2.skill_level || 1;
+
+  $('loading-msg').textContent = 'Загружаем матчи...';
+  const items = history.items || [];
+
+  const recent = await Promise.all(items.map(async m => {
+    try {
+      const md = await api(`/matches/${m.match_id}/stats`);
+      const round = md.rounds?.[0];
+      const team = round?.teams?.find(t => t.players?.some(p => p.player_id === pid));
+      const ps = team?.players?.find(p => p.player_id === pid)?.player_stats || {};
+      const opp = round?.teams?.find(t => t !== team);
+      const k = parseInt(ps['Kills']||0), d = parseInt(ps['Deaths']||1), a = parseInt(ps['Assists']||0);
+      const hs = parseInt(ps['Headshots']||0);
+      return {
+        map: round?.round_stats?.Map || 'Unknown',
+        result: team?.team_stats?.['Team Win']==='1' ? 'W' : 'L',
+        score: `${team?.team_stats?.['Final Score']||0}-${opp?.team_stats?.['Final Score']||0}`,
+        kills:k, deaths:d, assists:a,
+        kd: d>0 ? +(k/d).toFixed(2) : k,
+        hs_pct: k>0 ? Math.round(hs/k*100) : 0,
+        adr: Math.round(parseFloat(ps['ADR']||ps['Average Damage per Round']||0)),
+        date: fmtDate(m.finished_at||m.started_at||Date.now()/1000),
+        elo_change: null,
+        match_id: m.match_id
+      };
+    } catch(e) {
+      return { map:'Unknown', result:'?', score:'—', kills:0, deaths:0, assists:0, kd:0, hs_pct:0, adr:0,
+               date: fmtDate(m.finished_at||m.started_at||Date.now()/1000), elo_change:null, match_id:m.match_id };
+    }
+  }));
+
+  const segs = (stats.segments||[]).filter(s=>s.mode==='5v5'&&s.label?.startsWith('de_'));
+  const map_stats = segs.map(seg => {
+    const ss = seg.stats||{};
+    const mc=parseInt(ss['Matches']||0), mw=parseInt(ss['Wins']||0);
+    return { map:seg.label, matches:mc, wins:mw, winrate:mc>0?Math.round(mw/mc*100):0,
+             kd:parseFloat(ss['Average K/D Ratio']||0), hs_pct:parseFloat(ss['Average Headshots %']||0) };
+  }).filter(m=>m.matches>0).sort((a,b)=>b.matches-a.matches).slice(0,8);
+
+  let elo_history=[elo], cur=elo;
+  for(const m of recent){ cur-=m.result==='W'?25:-22; elo_history.unshift(Math.max(100,cur)); }
+  elo_history=elo_history.slice(0,20);
+
+  const best = recent.reduce((b,m)=>(!b||m.kills>b.kills)?m:b, null)||recent[0];
+
+  const dw=new Array(7).fill(0), dc=new Array(7).fill(0);
+  items.forEach((m,i)=>{
+    if(!m.finished_at)return;
+    const d=new Date(m.finished_at*1000).getDay(), idx=d===0?6:d-1;
+    dc[idx]++; if(recent[i]?.result==='W') dw[idx]++;
+  });
+
+  return {
+    nickname: player.nickname,
+    avatar: player.avatar||'',
+    country: player.country||'xx',
+    level, elo,
+    elo_range: ELO_RANGES[Math.min(level-1,9)],
+    lifetime: {
+      matches:total, wins, winrate:total>0?Math.round(wins/total*100):0,
+      kd:parseFloat(ls['Average K/D Ratio']||0),
+      hs_pct:Math.round(parseFloat(ls['Average Headshots %']||0)),
+      adr:parseFloat(ls['Average Damage per Round']||0),
+      avg_kills:parseFloat(ls['Average Kills']||0),
+      mvps:wins,
+      longest_streak:parseInt(ls['Longest Win Streak']||0)
+    },
+    recent_matches: recent,
+    best_match: best ? {map:best.map,score:best.score,kills:best.kills,deaths:best.deaths,kd:best.kd,hs_pct:best.hs_pct,adr:best.adr,date:best.date} : {map:'—',score:'—',kills:0,deaths:0,kd:0,hs_pct:0,adr:0,date:'—'},
+    map_stats, elo_history,
+    day_winrates: dw.map((w,i)=>dc[i]>0?Math.round(w/dc[i]*100):50)
+  };
+}ction renderStats(d) {
+  // Header
+  $('p-name').textContent = d.nickname;
+  $('p-level').textContent = d.level;
+  $('p-elo').textContent = d.elo.toLocaleString();
+  $('p-country').textContent = d.country?.toUpperCase() || '';
+  $('p-matches').textContent = d.lifetime.matches + ' матчей';
+  $('p-winrate').textContent = d.lifetime.winrate + '% WR';
+  $('p-avatar-fb').textContent = d.nickname.slice(0,2).toUpperCase();
+
+  // Avatar
+  if(d.avatar) {
+    $('p-avatar').src = d.avatar;
+    $('p-avatar').style.display = 'block';
+  } else {
+    $('p-avatar').style.display = 'none';
+    $('p-avatar-fb').style.display = 'flex';
+  }
+
+  // Country flag
+  const flagMap = {ua:'🇺🇦',ru:'🇷🇺',de:'🇩🇪',fr:'🇫🇷',pl:'🇵🇱',dk:'🇩🇰',se:'🇸🇪',fi:'🇫🇮',ba:'🇧🇦',rs:'🇷🇸',hr:'🇭🇷',kz:'🇰🇿',br:'🇧🇷',us:'🇺🇸',gb:'🇬🇧',ro:'🇷🇴',hu:'🇭🇺',sk:'🇸🇰',cz:'🇨🇿',bg:'🇧🇬',mn:'🇲🇳'};
+  $('p-flag').textContent = flagMap[d.country?.toLowerCase()] || '🏳️';
+
+  // ELO progress bar
+  const [emin,emax] = d.elo_range || [d.elo-200, d.elo+200];
+  const pct = Math.min(100, Math.max(0, ((d.elo - emin) / (emax - emin)) * 100));
+  $('elo-bar-fill').style.width = pct + '%';
+  $('elo-range-min').textContent = emin;
+  $('elo-range-max').textContent = emax;
+
+  // FACEIT profile link
+  $('faceit-profile-link').href = `https://www.faceit.com/en/players/${d.nickname}`;
+
+  // Form dots
+  const formEl = $('form-dots');
+  formEl.innerHTML = '';
+  let streak = 0; let streakType = '';
+  const last10 = d.recent_matches.slice(0,10);
+  last10.forEach((m,i) => {
+    const dot = el('div', 'fdot ' + (m.result==='W'?'w':'l'), m.result);
+    formEl.appendChild(dot);
+    if(i===0) { streakType = m.result; streak = 1; }
+    else if(m.result===streakType) streak++;
+  });
+  const sb = $('streak-badge');
+  if(streak >= 2) {
+    sb.style.display = 'flex';
+    sb.textContent = streakType==='W' ? `🔥 ${streak} побед подряд` : `❄️ ${streak} поражений подряд`;
+    sb.style.color = streakType==='W' ? 'var(--orange)' : 'var(--red)';
+    sb.style.borderColor = streakType==='W' ? 'rgba(255,108,0,.3)' : 'rgba(255,61,61,.3)';
+    sb.style.background = streakType==='W' ? 'var(--orange-glow)' : 'var(--red-dim)';
+  }
+
+  renderOverview(d);
+  renderMatches(d);
+  renderMaps(d);
+  renderCompare();
+}
+
+function kdClass(kd) {
+  if(kd >= 1.5) return 'kd-good';
+  if(kd >= 1.0) return 'kd-ok';
+  return 'kd-bad';
+}
+
+function matchHtml(m, showElo=false) {
+  const kdc = kdClass(m.kd);
+  const isWin = m.result === 'W';
+  const eloStr = showElo && m.elo_change !== undefined ? `<div class="ms-item"><div class="ms-val ${m.elo_change>0?'kd-good':'kd-bad'}">${m.elo_change>0?'+':''}${m.elo_change}</div><div class="ms-lbl">ELO</div></div>` : '';
+  const div = document.createElement('div');
+  div.className = 'match-item';
+  div.innerHTML = `
+    <div class="match-result-badge ${isWin?'win-badge':'loss-badge'}">${m.result}</div>
+    <div class="match-map-name">${m.map}</div>
+    <div class="match-score-txt">${m.score}</div>
+    <div class="match-stats-row">
+      <div class="ms-item"><div class="ms-val">${m.kills}</div><div class="ms-lbl">K</div></div>
+      <div class="ms-item"><div class="ms-val">${m.deaths}</div><div class="ms-lbl">D</div></div>
+      <div class="ms-item"><div class="ms-val">${m.assists}</div><div class="ms-lbl">A</div></div>
+      <div class="ms-item"><div class="ms-val ${kdc}">${m.kd.toFixed(2)}</div><div class="ms-lbl">K/D</div></div>
+      <div class="ms-item"><div class="ms-val">${m.hs_pct}%</div><div class="ms-lbl">HS</div></div>
+      <div class="ms-item"><div class="ms-val">${m.adr}</div><div class="ms-lbl">ADR</div></div>
+      ${eloStr}
+    </div>
+    <div class="match-date">${m.date}</div>
+  `;
+  return div;
+}
+
+function renderOverview(d) {
+  const l = d.lifetime;
+  const stats = [
+    { label:'K/D Ratio', val: l.kd.toFixed(2), cls:'orange highlight', delta:'+0.06 неделя', deltacls:'delta-up' },
+    { label:'HS%', val: l.hs_pct+'%', cls:'green', delta:'+1.2%', deltacls:'delta-up' },
+    { label:'Winrate', val: l.winrate+'%', cls:'', delta:null },
+    { label:'Avg Kills', val: l.avg_kills.toFixed(1), cls:'', delta:null },
+    { label:'ADR', val: l.adr.toFixed(1), cls:'orange', delta:'+3.1', deltacls:'delta-up' },
+    { label:'Матчи', val: l.matches, cls:'', delta:null },
+  ];
+  const grid = $('overview-stats');
+  grid.innerHTML = '';
+  stats.forEach(s => {
+    const card = el('div','stat-card '+(s.cls||''));
+    card.innerHTML = `<div class="sc-label">${s.label}</div>
+      <div class="sc-val ${s.cls.includes('orange')?'orange':s.cls.includes('green')?'green':''}">${s.val}</div>
+      ${s.delta ? `<div class="sc-delta ${s.deltacls}">${s.deltacls==='delta-up'?'▲':'▼'} ${s.delta}</div>` : ''}`;
+    grid.appendChild(card);
+  });
+
+  // Best match
+  const bm = d.best_match;
+  const bmsec = $('best-match-section');
+  bmsec.innerHTML = `
+    <div class="section-head"><h3>Лучший матч</h3><div class="section-head-line"></div></div>
+    <div class="best-match-card">
+      <div class="bm-header">
+        <div class="bm-crown">👑</div>
+        <div class="bm-info">
+          <div class="bm-map">${bm.map}</div>
+          <div class="bm-score">Победа ${bm.score}</div>
+          <div class="bm-date">${bm.date}</div>
+        </div>
+        <div class="bm-tag">🏆 Рекорд</div>
+      </div>
+      <div class="bm-stats">
+        <div class="bm-stat"><div class="bm-val" style="color:var(--orange)">${bm.kills}</div><div class="bm-lbl">Kills</div></div>
+        <div class="bm-stat"><div class="bm-val">${bm.deaths}</div><div class="bm-lbl">Deaths</div></div>
+        <div class="bm-stat"><div class="bm-val" style="color:var(--green)">${bm.kd.toFixed(2)}</div><div class="bm-lbl">K/D</div></div>
+        <div class="bm-stat"><div class="bm-val">${bm.hs_pct}%</div><div class="bm-lbl">HS%</div></div>
+        <div class="bm-stat"><div class="bm-val" style="color:var(--orange)">${bm.adr}</div><div class="bm-lbl">ADR</div></div>
+      </div>
+    </div>
+  `;
+
+  // Recent matches (5)
+  const list = $('recent-match-list');
+  list.innerHTML = '';
+  d.recent_matches.slice(0,5).forEach(m => list.appendChild(matchHtml(m, true)));
+}
+
+function renderMatches(d) {
+  const l = d.lifetime;
+  const sg = $('match-summary-stats');
+  sg.innerHTML = '';
+  [
+    {label:'Всего матчей',val:l.matches,cls:''},
+    {label:'Побед',val:Math.round(l.matches*l.winrate/100),cls:'green'},
+    {label:'Winrate',val:l.winrate+'%',cls:'orange'},
+  ].forEach(s => {
+    const c = el('div','stat-card');
+    c.innerHTML = `<div class="sc-label">${s.label}</div><div class="sc-val ${s.cls}">${s.val}</div>`;
+    sg.appendChild(c);
+  });
+
+  const list = $('full-match-list');
+  list.innerHTML = '';
+  d.recent_matches.forEach(m => list.appendChild(matchHtml(m, true)));
+}
+
+function renderMaps(d) {
+  const grid = $('maps-grid');
+  grid.innerHTML = '';
+  d.map_stats.forEach(m => {
+    const wrCls = m.winrate >= 60 ? 'wr-positive' : m.winrate >= 50 ? 'wr-neutral' : 'wr-negative';
+    const barColor = m.winrate >= 60 ? 'var(--green)' : m.winrate >= 50 ? 'var(--orange)' : 'var(--red)';
+    const card = el('div','map-card');
+    card.innerHTML = `
+      <div class="map-name-header">${m.map}</div>
+      <div class="map-wr-row">
+        <div class="map-wr-val ${wrCls}">${m.winrate}%</div>
+        <div style="font-size:12px;color:var(--muted)">${m.wins}/${m.matches}</div>
+      </div>
+      <div class="map-bar"><div class="map-bar-fill" style="width:${m.winrate}%;background:${barColor}"></div></div>
+      <div class="map-row"><span class="map-row-label">K/D</span><span class="map-row-val">${m.kd.toFixed(2)}</span></div>
+      <div class="map-row"><span class="map-row-label">HS%</span><span class="map-row-val">${m.hs_pct}%</span></div>
+      <div class="map-row"><span class="map-row-label">Матчей</span><span class="map-row-val">${m.matches}</span></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderCharts(d) {
+  if(chartsBuilt) return;
+  chartsBuilt = true;
+
+  const gridColor = 'rgba(255,255,255,0.05)';
+  const tickColor = '#6b7280';
+
+  // ELO chart
+  const eloLabels = d.elo_history.map((_,i) => i===0?'20 матчей назад':i===d.elo_history.length-1?'Сейчас':'');
+  new Chart($('elo-chart'), {
+    type: 'line',
+    data: {
+      labels: eloLabels,
+      datasets: [{
+        data: d.elo_history,
+        borderColor: '#ff6c00',
+        borderWidth: 2.5,
+        pointRadius: d.elo_history.map((_,i)=> i===d.elo_history.length-1?5:2),
+        pointBackgroundColor: '#ff6c00',
+        fill: true,
+        backgroundColor: 'rgba(255,108,0,0.08)',
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {legend:{display:false}, tooltip:{callbacks:{label:ctx=>`ELO: ${ctx.raw}`}}},
+      scales: {
+        x:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11}}},
+        y:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11}}}
+      }
+    }
+  });
+
+  // K/D chart
+  const kdData = d.recent_matches.slice().reverse().map(m => m.kd);
+  const kdColors = kdData.map(v => v>=1.5?'#00e87a':v>=1.0?'#ff8c30':'#ff3d3d');
+  new Chart($('kd-chart'), {
+    type: 'bar',
+    data: {
+      labels: kdData.map((_,i)=>`#${i+1}`),
+      datasets: [{data:kdData, backgroundColor:kdColors, borderRadius:4}]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:tickColor,font:{size:10}}},
+        y:{grid:{color:gridColor},ticks:{color:tickColor},min:0}
+      }
+    }
+  });
+
+  // Day winrate chart
+  const days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const dayWR = d.day_winrates;
+  const dayColors = dayWR.map(v=>v>=60?'#00e87a':v>=50?'#ff8c30':'#ff3d3d');
+  new Chart($('day-chart'), {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [{data:dayWR, backgroundColor:dayColors, borderRadius:6}]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`Winrate: ${ctx.raw}%`}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:tickColor}},
+        y:{grid:{color:gridColor},ticks:{color:tickColor,callback:v=>v+'%'},min:0,max:100}
+      }
+    }
+  });
+}
+
+async function addCompareFriend() {
+  const nick = $('friend-input').value.trim();
+  if(!nick) return;
+  $('friend-input').value = '';
+  $('friend-input').placeholder = 'Загружаем...';
+  try {
+    const data = await fetchFaceitStats(nick);
+    compareList.push(data);
+    renderCompare();
+  } catch(e) {
+    alert('Не удалось найти игрока: ' + nick);
+  }
+  $('friend-input').placeholder = 'Добавить игрока по нику...';
+}
+
+function renderCompare() {
+  const grid = $('compare-grid');
+  grid.innerHTML = '';
+  const colors = ['#ff6c00','#00e87a','#4d9eff','#ff3d3d','#b47fff'];
+  compareList.forEach((p,i) => {
+    const isYou = i===0;
+    const c = el('div','compare-card'+(isYou?' is-you':''));
+    const initials = p.nickname.slice(0,2).toUpperCase();
+    const col = colors[i%colors.length];
+    const l = p.lifetime;
+    c.innerHTML = `
+      <div class="cc-header">
+        <div class="cc-avatar" style="background:${col}22;color:${col}">${initials}</div>
+        <div>
+          <div class="cc-name">${p.nickname}</div>
+          <div class="cc-level">Level ${p.level} · ${p.elo.toLocaleString()} ELO</div>
+        </div>
+        ${isYou?'<div class="you-pill">Ты</div>':''}
+      </div>
+      <div class="cc-stats">
+        <div class="cc-stat"><div class="cc-val" style="color:${col}">${l.kd.toFixed(2)}</div><div class="cc-lbl">K/D</div></div>
+        <div class="cc-stat"><div class="cc-val">${l.hs_pct}%</div><div class="cc-lbl">HS%</div></div>
+        <div class="cc-stat"><div class="cc-val">${l.winrate}%</div><div class="cc-lbl">WR</div></div>
+        <div class="cc-stat"><div class="cc-val">${l.adr.toFixed(1)}</div><div class="cc-lbl">ADR</div></div>
+      </div>
+    `;
+    grid.appendChild(c);
+  });
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  $('tab-'+name).classList.add('active');
+  if(name === 'progress' && playerData) renderCharts(playerData);
+}
+function switchTabByName(name) {
+  const btn = [...document.querySelectorAll('.tab-btn')].find(b=>b.textContent.toLowerCase().includes(name==='matches'?'матч':''));
+  switchTab(name, btn);
+}
+
+// init
+show('search-screen');
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/faceit/:path*", "destination": "/api/faceit?path=/:path*" }
+  ]
+}
